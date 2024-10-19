@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Rear Camera Access</title>
+  <title>Camera Live Uploader</title>
   <style>
     body, html {
       margin: 0;
@@ -14,7 +14,7 @@
       background-color: black;
     }
 
-    video {
+    video, canvas {
       width: 100vw;
       height: 100vh;
       object-fit: cover;
@@ -26,21 +26,39 @@
       user-select: none;
     }
   </style>
+  <!-- Add Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js"></script>
 </head>
 <body>
   <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBymXvModLuqrGyM6m6_GY1wR9MYEyLe6s",
+      authDomain: "rail-vista-c8a88.firebaseapp.com",
+      projectId: "rail-vista-c8a88",
+      storageBucket: "rail-vista-c8a88.appspot.com",
+      messagingSenderId: "119866385503",
+      appId: "1:119866385503:web:cf5a776e763d3d944667ea"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+
     const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('canvas');
+    const canvasContext = canvasElement.getContext('2d');
     let wakeLock = null;
 
     // Request camera access and choose the rear camera
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { exact: "environment" }
-          }
+          video: { facingMode: { exact: "environment" } }
         });
         videoElement.srcObject = stream;
       } catch (err) {
@@ -69,6 +87,39 @@
     // Start the camera and prevent the screen from sleeping
     startCamera();
     enableWakeLock();
+
+    // Capture image from video and upload to Firebase every second
+    function captureAndUploadImage() {
+      // Set canvas size to match the video stream
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+
+      // Draw the current frame from the video onto the canvas
+      canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+      // Convert canvas to a Blob (image data)
+      canvasElement.toBlob(async function(blob) {
+        if (blob) {
+          const fileName = `image_${Date.now()}.jpg`;
+          const storageRef = firebase.storage().ref().child(fileName);
+          try {
+            // Use Firebase Storage API to upload the blob
+            const snapshot = await storageRef.put(blob);
+            console.log('Uploaded:', fileName);
+          } catch (err) {
+            console.error('Error uploading image', err);
+          }
+        }
+      }, 'image/jpeg');
+
+      // Recapture the image every second
+      setTimeout(captureAndUploadImage, 1000);
+    }
+
+    // Start capturing and uploading images after the video starts playing
+    videoElement.onplaying = () => {
+      captureAndUploadImage();
+    };
   </script>
 </body>
 </html>

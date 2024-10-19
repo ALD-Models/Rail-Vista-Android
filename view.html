@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Live Stream Viewer</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: black;
+    }
+
+    img {
+      max-width: 100vw;
+      max-height: 100vh;
+      object-fit: contain;
+    }
+  </style>
+  <!-- Add Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js"></script>
+</head>
+<body>
+  <img id="liveImage" alt="Live Stream" />
+
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBymXvModLuqrGyM6m6_GY1wR9MYEyLe6s",
+      authDomain: "rail-vista-c8a88.firebaseapp.com",
+      projectId: "rail-vista-c8a88",
+      storageBucket: "rail-vista-c8a88.appspot.com",
+      messagingSenderId: "119866385503",
+      appId: "1:119866385503:web:cf5a776e763d3d944667ea"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const storageRef = storage.ref();
+
+    const liveImageElement = document.getElementById('liveImage');
+
+    // Function to fetch the latest image from Firebase Storage
+    async function fetchLatestImage() {
+      try {
+        // List all files in Firebase Storage
+        const listResult = await storageRef.listAll();
+        const items = listResult.items;
+
+        // If there are images in the storage
+        if (items.length > 0) {
+          // Sort images by name (timestamps are in the file names)
+          const sortedItems = items.sort((a, b) => b.name.localeCompare(a.name));
+
+          // Get the latest image file
+          const latestImageRef = sortedItems[0];
+
+          // Get the download URL for the latest image
+          const imageUrl = await latestImageRef.getDownloadURL();
+
+          // Set the image src to the latest image
+          liveImageElement.src = imageUrl;
+        }
+      } catch (err) {
+        console.error('Error fetching image', err);
+      }
+    }
+
+    // Fetch a new image every second
+    setInterval(fetchLatestImage, 1000);
+  </script>
+</body>
+</html>

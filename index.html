@@ -12,15 +12,16 @@
       padding: 0;
       overflow: hidden;
       background-color: black;
+      height: 100vh; /* Make body full height */
     }
 
     video, canvas {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
+      width: 100vw; /* Full width */
+      height: 100vh; /* Full height */
+      object-fit: cover; /* Cover the area */
       transform: rotate(90deg); /* Rotate the video to landscape */
       transform-origin: left top; /* Fix the transformation origin */
-      position: absolute;
+      position: absolute; /* Allow for full-screen positioning */
       left: 100%; /* Position the video off-screen initially */
     }
 
@@ -94,7 +95,7 @@
     startCamera();
     enableWakeLock();
 
-    // Capture image from video and upload to Firebase every second
+    // Capture image from video and upload to Firebase every 100 milliseconds
     async function captureAndUploadImage() {
       // Set canvas size to match the video stream
       canvasElement.width = videoElement.videoWidth;
@@ -121,8 +122,8 @@
         }
       }, 'image/jpeg');
 
-      // Recapture the image every second
-      setTimeout(captureAndUploadImage, 1000);
+      // Recapture the image every 100 milliseconds
+      setTimeout(captureAndUploadImage, 100);
     }
 
     // Function to delete old files

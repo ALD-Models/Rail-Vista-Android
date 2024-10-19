@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Rear Camera Access</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: black;
+    }
+
+    video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror the video to match the front-facing camera behavior */
+    }
+
+    /* Disable pinch-to-zoom */
+    html, body {
+      touch-action: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <video id="video" autoplay playsinline></video>
+
+  <script>
+    const videoElement = document.getElementById('video');
+    let wakeLock = null;
+
+    // Request camera access and choose the rear camera
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { exact: "environment" }
+          }
+        });
+        videoElement.srcObject = stream;
+      } catch (err) {
+        console.error('Error accessing the camera', err);
+      }
+    }
+
+    // Prevent the screen from sleeping
+    async function enableWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.error('Error enabling wake lock', err);
+      }
+    }
+
+    // Reapply the wake lock when visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        enableWakeLock();
+      }
+    });
+
+    // Start the camera and prevent the screen from sleeping
+    startCamera();
+    enableWakeLock();
+  </script>
+</body>
+</html>
